@@ -230,6 +230,54 @@ def multi_comment(tag_list,comment_text):
         print colored("Status code other than 200 received!",'red')
 
 
+def choose_post():
+    print colored("Choose post one of following options:",'magenta')
+    print "a.Choose post with minimum likes of a username"
+    print "b.Choose recent post by a tag"
+    choice=raw_input("Enter your choice: ")
+    if choice=='a':
+        user_name=raw_input("Enter username: ")
+        user_id=get_user_id(user_name)
+        if user_id==None:
+            print colored("Username not valid!",'red')
+        else:
+            request_url = (BASE_URL + 'users/%s/media/recent/?access_token=%s') % (user_id, APP_ACCESS_TOKEN)
+            print 'GET request url : %s' % (request_url)
+            user_media = requests.get(request_url).json()
+
+            if user_media['meta']['code'] == 200:
+                if len(user_media['data']):
+                    like_count_list=[]
+                    for i in range(len(user_media['data'])):
+                        likes=user_media['data'][i]['likes']['count']
+                        like_count_list.append(likes)
+                    min_count=min(like_count_list)
+                    for i in range(len(user_media['data'])):
+                        if user_media['data'][i]['likes']['count']==min_count:
+                            get_id=user_media['data'][i]['id']
+                            image_name = get_id + '.jpeg'
+                            image_url = user_media['data'][i]['images']['standard_resolution']['url']
+                    urllib.urlretrieve(image_url, image_name)
+                    print colored('Your image has been downloaded!', 'blue')
+
+    elif choice=='b':
+        tag_name=raw_input('Enter tag name without leading "#": ')
+        request_url = (BASE_URL + 'tags/%s/media/recent?access_token=%s') % (tag_name, APP_ACCESS_TOKEN)
+        print "GET request url: %s" % (request_url)
+        media_list = requests.get(request_url).json()
+        if media_list['meta']['code']==200:
+            if len(media_list['data']):
+                image_name=media_list['data'][0]['id']+'.jpeg'
+                image_url = media_list['data'][0]['images']['standard_resolution']['url']
+                urllib.urlretrieve(image_url, image_name)
+                print colored('Your image has been downloaded!', 'blue')
+            else:
+                print colored("This tag has no posts",'red')
+        else:
+            print colored("Status code other than 200 recieved",'red')
+    else:
+        print colored("Wrong choice!! Try again.",'red')
+
 def marketing_comment(tag_name):
     print "Select from following options for commenting on posts: "
     print "a. Fixed comment to promote acadview"
@@ -262,8 +310,9 @@ def start_bot():
             print "h.Get a list of comments on the recent post of a user\n"
             print "i.Make a comment on the recent post of a user\n"
             print "j.Delete negative comments from the recent post of a user\n"
-            print "k.To do targeted comments on posts for marketing"
-            print "l.Exit"
+            print "k.To do targeted comments on posts for marketing\n"
+            print "l.To choose post by minimum likes or tag\n"
+            print "m.Exit"
 
             choice = raw_input("Enter you choice: ")
             if choice == "a":
@@ -295,9 +344,11 @@ def start_bot():
                 insta_username = raw_input("Enter the username of the user: ")
                 delete_negative_comment(insta_username)
             elif choice=='k':
-                tag_name=raw_input('Enter tag name you want to market your product(without "#"): ')
+                tag_name=raw_input('Enter tag name you want to market your product(without leading "#"): ')
                 marketing_comment(tag_name)
-            elif choice == "l":
+            elif choice=='l':
+                choose_post()
+            elif choice == "m":
                 exit()
             else:
                 print colored("wrong choice",'red')
