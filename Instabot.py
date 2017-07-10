@@ -4,6 +4,8 @@ from textblob import TextBlob
 from textblob.sentiments import NaiveBayesAnalyzer
 from termcolor import colored
 
+# __________________________________________________________________________________________________________________________________________________
+
 #STRORING ACCESS _TOKEN AND BASE_URL IN GLOBAL VARIABLE
 APP_ACCESS_TOKEN='1415747117.b9cb54b.3d49d10dcde5416cbc03113f3ffd6ad7'
 BASE_URL = 'https://api.instagram.com/v1/'
@@ -262,7 +264,6 @@ def recent_liked():
 # __________________________________________________________________________________________________________________________________________________
 
 
-
 #FUNTION TO DELETE NEGATIVE COMMENT ON RECENT POST OF GIVEN USERNAME
 def delete_negative_comment(insta_username):
     media_id = get_post_id(insta_username)                                                  #GETTING MEDIA ID OF POST IN VARIABLE
@@ -319,11 +320,12 @@ def multi_comment(tag_list,comment_text):
             print colored("Unable to process your request. Please try again!!",'red')
 # __________________________________________________________________________________________________________________________________________________
 
-#FUNCTION ASKS USER IF HE WANTS TO SEE POST WITH MINIMUM LIKES OR SEE RECENT POST HAVING SPECICFIED TAG
+#FUNCTION ASKS USER IF HE WANTS TO SEE POST WITH MINIMUM LIKES OR SEE POSTS WITH PARTICULAR TEXT IN THEIR CAPTION
 def choose_post():
     print colored("Choose post one of following options:",'magenta')
     print "a.Choose post with minimum likes of a username"
-    print "b.Choose recent post by a tag"
+    print "b.Choose post with maximum likes of a username"
+    print "c.Choose post which has particular text in caption"
     choice=raw_input("Enter your choice: ")
     try:
         if choice=='a':
@@ -352,24 +354,69 @@ def choose_post():
                                 image_url = user_media['data'][i]['images']['standard_resolution']['url']
                         urllib.urlretrieve(image_url, image_name)
                         print colored('Your image has been downloaded!', 'blue')
-
         elif choice=='b':
-            tag_name=raw_input('Enter tag name without leading "#": ')
-            request_url = (BASE_URL + 'tags/%s/media/recent?access_token=%s') % (tag_name, APP_ACCESS_TOKEN)
-            print "GET request url: %s" % (request_url)
-            media_list = requests.get(request_url).json()                                       #STORES JSON OBJECT RESPONSE IN A VARIABLE
-            if media_list['meta']['code']==200:                                                 #CHECKS IF RECIEVED META CODE IS 200
-
-                #DOWNLOADS THE RECENT POSTED IMAGE HAVING SPECIFIED TAG
-                if len(media_list['data']):
-                    image_name=media_list['data'][0]['id']+'.jpeg'
-                    image_url = media_list['data'][0]['images']['standard_resolution']['url']
-                    urllib.urlretrieve(image_url, image_name)
-                    print colored('Your image has been downloaded!', 'blue')
-                else:
-                    print colored("This tag has no posts",'red')
+            user_name = raw_input("Enter username: ")
+            user_id = get_user_id(user_name)
+            if user_id == None:
+                print colored("Username not valid!", 'red')
             else:
-                print colored("Status code other than 200 recieved",'red')
+                request_url = (BASE_URL + 'users/%s/media/recent/?access_token=%s') % (user_id, APP_ACCESS_TOKEN)
+                print 'GET request url : %s' % (request_url)
+                user_media = requests.get(request_url).json()  # STORES JSON OBJECT RESPONSE IN A VARIABLE
+
+                if user_media['meta']['code'] == 200:  # CHECKS IF RECIEVED META CODE IS 200
+                    if len(user_media['data']):
+                        like_count_list = []  # DECLARING EMPTY LIST TO STORE NUMBER OF LIKES
+                        for i in range(len(user_media['data'])):
+                            likes = user_media['data'][i]['likes']['count']  # GETS LIKES COUNT OF POSTS
+                            like_count_list.append(likes)  # APPENDS LIKES COUNT IN LIST
+                        min_count = max(like_count_list)  # GETS MINIMUM NUMBER FROM LIKES COUNT LIST
+                        for i in range(len(user_media['data'])):
+
+                            # FINDS THE POST WITH MINIMUM LIKES AND GETS ITS ID AND DOWNLOAD IMAGE
+                            if user_media['data'][i]['likes']['count'] == min_count:
+                                get_id = user_media['data'][i]['id']
+                                image_name = get_id + '.jpeg'
+                                image_url = user_media['data'][i]['images']['standard_resolution']['url']
+                        urllib.urlretrieve(image_url, image_name)
+                        print colored('Your image has been downloaded!', 'blue')
+
+
+        elif choice=='c':
+            user_name = raw_input("Enter username: ")
+            user_id = get_user_id(user_name)
+            if user_id == None:
+                print colored("Username not valid!", 'red')
+            else:
+                request_url = (BASE_URL + 'users/%s/media/recent/?access_token=%s') % (user_id, APP_ACCESS_TOKEN)
+                print 'GET request url : %s' % (request_url)
+                user_media = requests.get(request_url).json()  # STORES JSON OBJECT RESPONSE IN A VARIABLE
+
+                if user_media['meta']['code'] == 200:                                               #CHECKS IF RECIEVED META CODE IS 200
+                    if len(user_media['data']):
+                        word=raw_input("Enter word you want to search in caption of a post(It's case-sensitive!): ")    #ASKING FOR TEXT USER WANT TO SEARCH FOR IN CAPTION
+                        count=0
+                        for i in range(len(user_media['data'])):                                #LOOP ITERATES THROUGH ITEMS IN JSON ARRAY- DATA
+                            caption=user_media['data'][i]['caption']['text']
+                            if word in caption:                                                 #GETS THE POST IF WORD IS FOUND IN CAPTION OF POST
+                                print "Post id is: %s" %(user_media['data'][i]['id'])
+                                print "Caption: %s\n" %(caption)
+                                get_id = user_media['data'][i]['id']
+                                image_name = get_id + '.jpeg'
+                                image_url = user_media['data'][i]['images']['standard_resolution']['url']
+                                urllib.urlretrieve(image_url, image_name)
+                                print colored('Your image has been downloaded!', 'blue')
+                                count+=1                                                        #INCREMENTS COUNT BY 1
+                                
+                                #WE CAN FETCH ANY POST DETAIL BUT HERE I AM DOWNLOADING THE POST AND PRINTTING ITS CAPTION AND ID
+                                
+                        if count==0:                                                            #SO IF COUNT WAS NEVER INCREMENTED MEANS WORD IS NOT IN ANY CAPTION
+                            print colored("Entered word is not in caption of any post!",'red')
+                    else:
+                        print colored("This user has no media. Try again!",'red')
+                else:
+                    print colored("Status code other than 200 recieved",'red')
+
         else:
             print colored("Wrong choice!! Try again.",'red')
     except:
@@ -404,8 +451,9 @@ def marketing_comment(tag_name):
 def start_bot():
         while True:
             print '\n'
-            print 'Hey! Welcome to instaBot!'
-            print 'Here are your menu options:'
+            print colored("___________________________ | _/\_ INSTABOT  _/\_ | ___________________________",'magenta')
+            print colored('Hey! Welcome to instaBot!','blue')
+            print colored('Here are your menu options:','blue')
             print "a.Get your own details\n"
             print "b.Get details of a user by username\n"
             print "c.Get your own recent post\n"
@@ -417,7 +465,7 @@ def start_bot():
             print "i.Make a comment on the recent post of a user\n"
             print "j.Delete negative comments from the recent post of a user\n"
             print "k.To do targeted comments on posts for marketing\n"
-            print "l.To choose post by minimum likes or tag\n"
+            print "l.To choose post with minimum or maximum likes or post which has particular text in caption\n"
             print "m.Get recent post liked by you\n"
             print "n.Exit"
 
