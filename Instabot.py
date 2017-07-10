@@ -14,42 +14,46 @@ BASE_URL = 'https://api.instagram.com/v1/'
 
 #METHOD TO PRINT OWN INFO
 def self_info():
-    request_url=BASE_URL+'users/self/?access_token='+APP_ACCESS_TOKEN               #GET REQUEST URL
-    print "GET request url: %s" %(request_url)                                      #PRINTS GET REQUEST URL
-    user_info=requests.get(request_url).json()                                      #STORES JSON OBJECT RESPONSE IN A VARIABLE
+    try:
+        request_url=BASE_URL+'users/self/?access_token='+APP_ACCESS_TOKEN               #GET REQUEST URL
+        print "GET request url: %s" %(request_url)                                      #PRINTS GET REQUEST URL
+        user_info=requests.get(request_url).json()                                      #STORES JSON OBJECT RESPONSE IN A VARIABLE
+    except:
+        print colored("Request url is not working proper. Please Try again.",'red')
     if user_info['meta']['code'] == 200:                                            #CHECKS IF RECIEVED META CODE IS 200
-        try:
-            if len(user_info['data']):                                                  #IF DATA IN USER INFO IS NOT EMPTY THEN PRINTS DATA
-                print colored('Username: %s','green') % (user_info['data']['username'])
-                print colored('No. of followers: %s','green') % (user_info['data']['counts']['followed_by'])
-                print colored('No. of people you are following: %s','green') % (user_info['data']['counts']['follows'])
-                print colored('No. of posts: %s','green' )% (user_info['data']['counts']['media'])
-                print colored('Short Bio: %s','greed') %(user_info['data']['bio'])
-            else:
-                print colored('User does not exist!','red')
-        except KeyError:
-            print colored("Unable to process your request. Please try again!!",'red')
+        if len(user_info['data']):                                                  #IF DATA IN USER INFO IS NOT EMPTY THEN PRINTS DATA
+                    print colored('Username: %s','green') % (user_info['data']['username'])
+                    print colored('No. of followers: %s','green') % (user_info['data']['counts']['followed_by'])
+                    print colored('No. of people you are following: %s','green') % (user_info['data']['counts']['follows'])
+                    print colored('No. of posts: %s','green' )% (user_info['data']['counts']['media'])
+                    print colored('Short Bio: %s','green') %(user_info['data']['bio'])
+        else:
+                    print colored('User does not exist!','red')
     else:
         print colored('Status code other than 200 received!','red')
+
 
 #__________________________________________________________________________________________________________________________________________________
 
 #Function declaration to get the ID of a user by username
 def get_user_id(insta_username):
+    try:
         request_url = (BASE_URL + 'users/search?q=%s&access_token=%s') % (insta_username, APP_ACCESS_TOKEN)
         print 'GET request url : %s' % (request_url)
         user_info = requests.get(request_url).json()        #STORES JSON OBJECT RESPONSE IN A VARIABLE
-        try:
-            if user_info['meta']['code'] == 200:
-                if len(user_info['data']):
-                    return user_info['data'][0]['id']   #RETURNS ID OF THE USER
-                else:
-                    return None                         #RETRUNS NONE IF USERNAME IS NOT PRESENT
+    except:
+        print colored("Request url is not working proper.", 'red')
+    try:
+        if user_info['meta']['code'] == 200:
+            if len(user_info['data']):
+                return user_info['data'][0]['id']   #RETURNS ID OF THE USER
             else:
-                print colored('Status code other than 200 received!','red')
-                exit()                                  #exits if status other than 200 is recieved
-        except KeyError:
-            print colored("Unable to process your request. Please try again!!", 'red')
+                return None                         #RETRUNS NONE IF USERNAME IS NOT PRESENT
+        else:
+            print colored('Status code other than 200 received!','red')
+
+    except:
+        print colored("Unable to process your request. Please try again!!", 'red')
 
 # __________________________________________________________________________________________________________________________________________________
 
@@ -59,24 +63,24 @@ def get_user_info(insta_username):
         user_id = get_user_id(insta_username)
         if user_id == None:                                 #CHECKS  IF USERNAME IS VALID OR NOT
             print colored('User does not exist!','red')
-            exit()
-        request_url = (BASE_URL + 'users/%s?access_token=%s') % (user_id, APP_ACCESS_TOKEN)
-        print 'GET request url : %s' % (request_url)            #PRINTS GET REQUEST URL
-        user_info = requests.get(request_url).json()            #STORES JSON OBJECT RESPONSE IN A VARIABLE
-
-        if user_info['meta']['code'] == 200:                    #CHECKS IF RECIEVED META CODE IS 200
-            try:
-                if len(user_info['data']):
-                    print colored('Username: %s','green') % (user_info['data']['username'])
-                    print colored('No. of followers: %s','green') % (user_info['data']['counts']['followed_by'])
-                    print colored('No. of people %s are following: %s','green') % (user_info['data']['username'],user_info['data']['counts']['follows'])
-                    print colored('No. of posts: %s','green') % (user_info['data']['counts']['media'])
-                else:
-                    print colored('There is no data for this user!','red')
-            except KeyError:
-                print colored("Unable to process your request. Please try again!!", 'red')
         else:
-            print colored('Status code other than 200 received!','red')
+            request_url = (BASE_URL + 'users/%s?access_token=%s') % (user_id, APP_ACCESS_TOKEN)
+            print 'GET request url : %s' % (request_url)            #PRINTS GET REQUEST URL
+            user_info = requests.get(request_url).json()            #STORES JSON OBJECT RESPONSE IN A VARIABLE
+
+            if user_info['meta']['code'] == 200:                    #CHECKS IF RECIEVED META CODE IS 200
+                try:
+                    if len(user_info['data']):
+                        print colored('Username: %s','green') % (user_info['data']['username'])
+                        print colored('No. of followers: %s','green') % (user_info['data']['counts']['followed_by'])
+                        print colored('No. of people %s are following: %s','green') % (user_info['data']['username'],user_info['data']['counts']['follows'])
+                        print colored('No. of posts: %s','green') % (user_info['data']['counts']['media'])
+                    else:
+                        print colored('There is no data for this user!','red')
+                except KeyError:
+                    print colored("Unable to process your request. Please try again!!", 'red')
+            else:
+                print colored('Status code other than 200 received!','red')
 
 # __________________________________________________________________________________________________________________________________________________
 
@@ -109,21 +113,21 @@ def get_user_post(insta_username):
     user_id = get_user_id(insta_username)
     if user_id == None:
         print colored('User does not exist!','red')
-        exit()
-    request_url = (BASE_URL + 'users/%s/media/recent/?access_token=%s') % (user_id, APP_ACCESS_TOKEN)
-    print 'GET request url : %s' % (request_url)
-    user_media = requests.get(request_url).json()                                           #STORES JSON OBJECT RESPONSE IN A VARIABLE
-
-    if user_media['meta']['code'] == 200:                                                   #CHECKS IF RECIEVED META CODE IS 200
-        if len(user_media['data']):
-            image_name = user_media['data'][0]['id'] + '.jpeg'
-            image_url = user_media['data'][0]['images']['standard_resolution']['url']
-            urllib.urlretrieve(image_url, image_name)
-            print colored('Your image has been downloaded!', 'blue')
-        else:
-            print colored('Post does not exist!', 'red')
     else:
-        print colored('Status code other than 200 received!', 'red')
+        request_url = (BASE_URL + 'users/%s/media/recent/?access_token=%s') % (user_id, APP_ACCESS_TOKEN)
+        print 'GET request url : %s' % (request_url)
+        user_media = requests.get(request_url).json()                                           #STORES JSON OBJECT RESPONSE IN A VARIABLE
+
+        if user_media['meta']['code'] == 200:                                                   #CHECKS IF RECIEVED META CODE IS 200
+            if len(user_media['data']):
+                image_name = user_media['data'][0]['id'] + '.jpeg'
+                image_url = user_media['data'][0]['images']['standard_resolution']['url']
+                urllib.urlretrieve(image_url, image_name)
+                print colored('Your image has been downloaded!', 'blue')
+            else:
+                print colored('Post does not exist!', 'red')
+        else:
+            print colored('Status code other than 200 received!', 'red')
 
 # __________________________________________________________________________________________________________________________________________________
 
@@ -131,114 +135,134 @@ def get_user_post(insta_username):
 def get_post_id(insta_username):
     user_id = get_user_id(insta_username)
     if user_id == None:
-        print 'User does not exist!'
-        exit()
-    request_url = (BASE_URL + 'users/%s/media/recent/?access_token=%s') % (user_id, APP_ACCESS_TOKEN)
-    print 'GET request url : %s' % (request_url)
-    user_media = requests.get(request_url).json()                                   #STORES JSON OBJECT RESPONSE IN A VARIABLE
-    if user_media['meta']['code'] == 200:                                           #CHECKS IF RECIEVED META CODE IS 200
-        try:
-            if len(user_media['data']):
-                return user_media['data'][0]['id']                                      #RETURN RECENT POST ID
-            else:
-                print colored('There is no recent post of the user!','red')
-                exit()
-        except KeyError:
-            print colored("Unable to process your request. Please try again!!",'red')
+        print colored('User does not exist!','red')
     else:
-        print colored('Status code other than 200 received!','red')
-        exit()
+        request_url = (BASE_URL + 'users/%s/media/recent/?access_token=%s') % (user_id, APP_ACCESS_TOKEN)
+        print 'GET request url : %s' % (request_url)
+        user_media = requests.get(request_url).json()                                   #STORES JSON OBJECT RESPONSE IN A VARIABLE
+        if user_media['meta']['code'] == 200:                                           #CHECKS IF RECIEVED META CODE IS 200
+            try:
+                if len(user_media['data']):
+                    return user_media['data'][0]['id']                                      #RETURN RECENT POST ID
+                else:
+                    print colored('There is no recent post of the user!','red')
+                    exit()
+            except KeyError:
+                print colored("Unable to process your request. Please try again!!",'red')
+        else:
+            print colored('Status code other than 200 received!','red')
+            exit()
 
 # __________________________________________________________________________________________________________________________________________________
 
 #FUNTION TO GET LIST OF USERNAMES WHO HAVE LIKE THE RECENT POST OF GIVEN USERNAME
 def get_like_list(insta_username):
-    post_id = get_post_id(insta_username)
-    if post_id == None:                                                             #CHECKS FOR VALID POST ID
-        print colored('User does not exist!','red')
-        exit()
-    try:
-        request_url=(BASE_URL+'media/%s/likes?access_token=%s') %(post_id,APP_ACCESS_TOKEN)
-        print 'GET request url : %s' % (request_url)
-        like_list = requests.get(request_url).json()                                #STORES JSON OBJECT RESPONSE IN A VARIABLE
-        if len(like_list['data']):
-            print colored('These are the usernames that have liked your recent post:','green')
-            for i in range(len(like_list['data'])):                                 #FOR LOOP ITERATES THROUGH LENGTH OF DATA AND PRINTS USERNAMES WHO HAVE LIKED THE POST
-                    print colored('username: %s','blue') %(like_list['data'][i]['username'])
+    user_id = get_user_id(insta_username)
+    if user_id == None:
+        print colored('User does not exist!', 'red')
+    else:
+        post_id = get_post_id(insta_username)
+        if post_id == None:                                                             #CHECKS FOR VALID POST ID
+            print colored('User does not exist!','red')
         else:
-            print colored('User\'s recent post has no likes yet!','red')
-    except KeyError:
-            print colored("Unable to process your request. Please try again!!",'red')
+            try:
+                request_url=(BASE_URL+'media/%s/likes?access_token=%s') %(post_id,APP_ACCESS_TOKEN)
+                print 'GET request url : %s' % (request_url)
+                like_list = requests.get(request_url).json()                                #STORES JSON OBJECT RESPONSE IN A VARIABLE
+                if len(like_list['data']):
+                    print colored('These are the usernames that have liked your recent post:','green')
+                    for i in range(len(like_list['data'])):                                 #FOR LOOP ITERATES THROUGH LENGTH OF DATA AND PRINTS USERNAMES WHO HAVE LIKED THE POST
+                            print colored('username: %s','blue') %(like_list['data'][i]['username'])
+                else:
+                    print colored('User\'s recent post has no likes yet!','red')
+            except KeyError:
+                    print colored("Unable to process your request. Please try again!!",'red')
 
 # __________________________________________________________________________________________________________________________________________________
 
 
 #FUNTION TO MAKE A LIKE ON RECENT POST
 def like_a_post(insta_username):
-    media_id=get_post_id(insta_username)                                            #GETTING MEDIA ID OF POST IN VARIABLE
-    request_url=(BASE_URL+"media/%s/likes") %(media_id)
-    payload={"access_token":APP_ACCESS_TOKEN}                                       #PAYLOAD IS BODY OF POST REQUEST. HERE ITS ACCESS TOKEN
-    print 'POST request url : %s' % (request_url)
-    try:
-        post_a_like = requests.post(request_url, payload).json()                        #STORES JSON OBJECT RESPONSE IN A VARIABLE
-        if post_a_like['meta']['code'] == 200:                                          #CHECKS IF RECIEVED META CODE IS 200
-            print colored('Like was successful!','blue')
-        else:
-            print colored('Your like was unsuccessful. Try again!','red')
-    except KeyError:
-            print colored("Unable to process your request. Please try again!!",'red')
+    user_id=get_user_id(insta_username)
+    if user_id == None:
+        print colored('User does not exist!','red')
+    else:
+        media_id=get_post_id(insta_username)                                            #GETTING MEDIA ID OF POST IN VARIABLE
+        request_url=(BASE_URL+"media/%s/likes") %(media_id)
+        payload={"access_token":APP_ACCESS_TOKEN}                                       #PAYLOAD IS BODY OF POST REQUEST. HERE ITS ACCESS TOKEN
+        print 'POST request url : %s' % (request_url)
+        try:
+            post_a_like = requests.post(request_url, payload).json()                        #STORES JSON OBJECT RESPONSE IN A VARIABLE
+            if post_a_like['meta']['code'] == 200:                                          #CHECKS IF RECIEVED META CODE IS 200
+                print colored('Like was successful!','blue')
+            else:
+                print colored('Your like was unsuccessful. Try again!','red')
+        except KeyError:
+                print colored("Unable to process your request. Please try again!!",'red')
 
 # __________________________________________________________________________________________________________________________________________________
 
 def unlike_a_post(insta_username):
-    media_id = get_post_id(insta_username)
-    request_url = (BASE_URL + "media/%s/likes?access_token=%s") % (media_id,APP_ACCESS_TOKEN)
-    print 'DELETE request url: %s'%(request_url)                                    #PRINTS DELETE REQUEST URL
-    unlike_post=requests.delete(request_url).json()                                 #STORES JSON OBJECT RESPONSE IN A VARIABLE
-    if unlike_post['meta']['code'] == 200:                                          #CHECKS IF RECIEVED META CODE IS 200
-        print colored('Unike was successful!','blue')
+    user_id = get_user_id(insta_username)
+    if user_id == None:
+        print colored('User does not exist!', 'red')
     else:
-        print colored('Your Unlike was unsuccessful. Try again!','red')
+        media_id = get_post_id(insta_username)
+        request_url = (BASE_URL + "media/%s/likes?access_token=%s") % (media_id,APP_ACCESS_TOKEN)
+        print 'DELETE request url: %s'%(request_url)                                    #PRINTS DELETE REQUEST URL
+        unlike_post=requests.delete(request_url).json()                                 #STORES JSON OBJECT RESPONSE IN A VARIABLE
+        if unlike_post['meta']['code'] == 200:                                          #CHECKS IF RECIEVED META CODE IS 200
+            print colored('Unike was successful!','blue')
+        else:
+            print colored('Your Unlike was unsuccessful. Try again!','red')
 
 # __________________________________________________________________________________________________________________________________________________
 
 def get_comment_list(insta_username):
-    post_id = get_post_id(insta_username)                                           #GETTING MEDIA ID OF POST IN VARIABLE
-    if post_id == None:
-        print colored('User does not exist!','red')
-        exit()
-    try:
-        request_url = (BASE_URL + 'media/%s/comments?access_token=%s') % (post_id, APP_ACCESS_TOKEN)
-        print 'GET request url : %s' % (request_url)
-        comment_list=requests.get(request_url).json()                                                       #STORES JSON OBJECT RESPONSE IN A VARIABLE
-        if len(comment_list['data']):
-            print 'These are the usernames that have commented on your recent post:'
-            for i in range(len(comment_list['data'])):                                                      #FOR LOOP  ITERATES THROUGH LENGTH OF DATA AND PRINTS USERNAMES AND THEIR COMMENTS
-                    print colored('username: %s','blue') %(comment_list['data'][i]['from']['username'])
-                    print colored('comment: %s','blue') %(comment_list['data'][i]['text'])
-        else:
-            print colored('User\'s recent post has no comments yet!','red')
-    except KeyError:
-            print colored("Unable to process your request. Please try again!!",'red')
+    user_id = get_user_id(insta_username)
+    if user_id == None:
+        print colored('User does not exist!', 'red')
+    else:
+        post_id = get_post_id(insta_username)                                           #GETTING MEDIA ID OF POST IN VARIABLE
+        if post_id == None:
+            print colored('User does not exist!','red')
+            exit()
+        try:
+            request_url = (BASE_URL + 'media/%s/comments?access_token=%s') % (post_id, APP_ACCESS_TOKEN)
+            print 'GET request url : %s' % (request_url)
+            comment_list=requests.get(request_url).json()                                                       #STORES JSON OBJECT RESPONSE IN A VARIABLE
+            if len(comment_list['data']):
+                print 'These are the usernames that have commented on your recent post:'
+                for i in range(len(comment_list['data'])):                                                      #FOR LOOP  ITERATES THROUGH LENGTH OF DATA AND PRINTS USERNAMES AND THEIR COMMENTS
+                        print colored('username: %s','blue') %(comment_list['data'][i]['from']['username'])
+                        print colored('comment: %s \n','blue') %(comment_list['data'][i]['text'])
+            else:
+                print colored('User\'s recent post has no comments yet!','red')
+        except KeyError:
+                print colored("Unable to process your request. Please try again!!",'red')
 
 # __________________________________________________________________________________________________________________________________________________
 
 
 #FUNTION TO MAKE COMMENT ON RECENT POST OG UTL
 def post_a_comment(insta_username):
-    media_id = get_post_id(insta_username)                                                  #GETTING MEDIA ID OF POST IN VARIABLE
-    comment_text = raw_input("Your comment: ")                                              #ASKING FOR USER INPUT FOR COMMENT
-    try:
-        payload = {"access_token": APP_ACCESS_TOKEN, "text" : comment_text}                     #HERE PAYLOAD IS ACCESS TOKEN AND COMMENT TEXT TO BE POSTED
-        request_url = (BASE_URL + 'media/%s/comments') % (media_id)
-        print 'POST request url : %s' % (request_url)                                           #PRINTS POST REQUEST URL
-        make_comment = requests.post(request_url, payload).json()                               #STORES JSON OBJECT RESPONSE IN A VARIABLE
-        if make_comment['meta']['code'] == 200:                                                 #CHECKS IF RECIEVED META CODE IS 200
-            print colored("Successfully added a new comment!",'blue')
-        else:
-            print colored("Unable to add comment. Try again!",'red')
-    except :
-        print colored("Unable to process your request. Please try again!!",'red')
+    user_id = get_user_id(insta_username)
+    if user_id == None:
+        print colored('User does not exist!', 'red')
+    else:
+        media_id = get_post_id(insta_username)                                                  #GETTING MEDIA ID OF POST IN VARIABLE
+        comment_text = raw_input("Your comment: ")                                              #ASKING FOR USER INPUT FOR COMMENT
+        try:
+            payload = {"access_token": APP_ACCESS_TOKEN, "text" : comment_text}                     #HERE PAYLOAD IS ACCESS TOKEN AND COMMENT TEXT TO BE POSTED
+            request_url = (BASE_URL + 'media/%s/comments') % (media_id)
+            print 'POST request url : %s' % (request_url)                                           #PRINTS POST REQUEST URL
+            make_comment = requests.post(request_url, payload).json()                               #STORES JSON OBJECT RESPONSE IN A VARIABLE
+            if make_comment['meta']['code'] == 200:                                                 #CHECKS IF RECIEVED META CODE IS 200
+                print colored("Successfully added a new comment!",'blue')
+            else:
+                print colored("Unable to add comment. Try again!",'red')
+        except :
+            print colored("Unable to process your request. Please try again!!",'red')
 
 # __________________________________________________________________________________________________________________________________________________
 
@@ -266,6 +290,7 @@ def recent_liked():
 
 #FUNTION TO DELETE NEGATIVE COMMENT ON RECENT POST OF GIVEN USERNAME
 def delete_negative_comment(insta_username):
+
     media_id = get_post_id(insta_username)                                                  #GETTING MEDIA ID OF POST IN VARIABLE
     request_url = (BASE_URL + 'media/%s/comments/?access_token=%s') % (media_id, APP_ACCESS_TOKEN)
     print 'GET request url : %s' % (request_url)
@@ -303,17 +328,20 @@ def delete_negative_comment(insta_username):
 def multi_comment(tag_list,comment_text):
     try:
         if tag_list['meta']['code'] == 200:
-            for i in range(len(tag_list['data'])):
-                post_id = tag_list['data'][i]['id']
+            if len(tag_list['data']):
+                for i in range(len(tag_list['data'])):
+                    post_id = tag_list['data'][i]['id']
 
-                payload = {"access_token": APP_ACCESS_TOKEN, "text": comment_text}
-                request_url = (BASE_URL + 'media/%s/comments') % (post_id)
-                print 'POST request url : %s' % (request_url)
-                make_comment = requests.post(request_url, payload).json()                           #STORES JSON OBJECT RESPONSE IN A VARIABLE
-                if make_comment['meta']['code'] == 200:                                             #CHECKS IF RECIEVED META CODE IS 200
-                    print colored("Successfully added a new comment!",'blue')
-                else:
-                    print colored("Unable to add comment. Try again!",'red')
+                    payload = {"access_token": APP_ACCESS_TOKEN, "text": comment_text}
+                    request_url = (BASE_URL + 'media/%s/comments') % (post_id)
+                    print 'POST request url : %s' % (request_url)
+                    make_comment = requests.post(request_url, payload).json()                           #STORES JSON OBJECT RESPONSE IN A VARIABLE
+                    if make_comment['meta']['code'] == 200:                                             #CHECKS IF RECIEVED META CODE IS 200
+                        print colored("Successfully added a new comment!",'blue')
+                    else:
+                        print colored("Unable to add comment. Try again!",'red')
+            else:
+                print colored("Tag not found in any post",'red')
         else:
             print colored("Status code other than 200 received!",'red')
     except KeyError:
@@ -395,23 +423,26 @@ def choose_post():
                 if user_media['meta']['code'] == 200:                                               #CHECKS IF RECIEVED META CODE IS 200
                     if len(user_media['data']):
                         word=raw_input("Enter word you want to search in caption of a post(It's case-sensitive!): ")    #ASKING FOR TEXT USER WANT TO SEARCH FOR IN CAPTION
-                        count=0
-                        for i in range(len(user_media['data'])):                                #LOOP ITERATES THROUGH ITEMS IN JSON ARRAY- DATA
-                            caption=user_media['data'][i]['caption']['text']
-                            if word in caption:                                                 #GETS THE POST IF WORD IS FOUND IN CAPTION OF POST
-                                print "Post id is: %s" %(user_media['data'][i]['id'])
-                                print "Caption: %s\n" %(caption)
-                                get_id = user_media['data'][i]['id']
-                                image_name = get_id + '.jpeg'
-                                image_url = user_media['data'][i]['images']['standard_resolution']['url']
-                                urllib.urlretrieve(image_url, image_name)
-                                print colored('Your image has been downloaded!', 'blue')
-                                count+=1                                                        #INCREMENTS COUNT BY 1
-                                
-                                #WE CAN FETCH ANY POST DETAIL BUT HERE I AM DOWNLOADING THE POST AND PRINTTING ITS CAPTION AND ID
-                                
-                        if count==0:                                                            #SO IF COUNT WAS NEVER INCREMENTED MEANS WORD IS NOT IN ANY CAPTION
-                            print colored("Entered word is not in caption of any post!",'red')
+                        if word.isspace()==True or len(word)==0:
+                            print colored("Word cannot be empty. Try again!",'red')
+                        else:
+                            count=0
+                            for i in range(len(user_media['data'])):                                #LOOP ITERATES THROUGH ITEMS IN JSON ARRAY- DATA
+                                caption=user_media['data'][i]['caption']['text']
+                                if word in caption:                                                 #GETS THE POST IF WORD IS FOUND IN CAPTION OF POST
+                                    print "Post id is: %s" %(user_media['data'][i]['id'])
+                                    print "Caption: %s\n" %(caption)
+                                    get_id = user_media['data'][i]['id']
+                                    image_name = get_id + '.jpeg'
+                                    image_url = user_media['data'][i]['images']['standard_resolution']['url']
+                                    urllib.urlretrieve(image_url, image_name)
+                                    print colored('Your image has been downloaded!', 'blue')
+                                    count+=1                                                        #INCREMENTS COUNT BY 1
+
+                                    #WE CAN FETCH ANY POST DETAIL BUT HERE I AM DOWNLOADING THE POST AND PRINTTING ITS CAPTION AND ID
+
+                            if count==0:                                                            #SO IF COUNT WAS NEVER INCREMENTED MEANS WORD IS NOT IN ANY CAPTION
+                                print colored("Entered word is not in caption of any post!",'red')
                     else:
                         print colored("This user has no media. Try again!",'red')
                 else:
@@ -426,32 +457,35 @@ def choose_post():
 
 #FUNCTION TO SELECT IF USER WANT TO POST FIXED COMMENT OR CUSTOM COMMENT ON POSTS HAVING SPECIFIED TAG NAME
 def marketing_comment(tag_name):
-    print "Select from following options for commenting on posts: "
-    print "a. Fixed comment to promote acadview"
-    print "b. Custom comment"
-    choice=raw_input("Enter your choice: ")
-    request_url=(BASE_URL+'tags/%s/media/recent?access_token=%s') %(tag_name,APP_ACCESS_TOKEN)
-    print "GET request url: %s" %(request_url)
-    try:
-        tag_list=requests.get(request_url).json()                                       #STORES JSON OBJECT RESPONSE IN A VARIABLE
-        if choice=='a':
-            comment_text = "Join Acadview to become Full Stack Developer and get a job!"
-            multi_comment(tag_list,comment_text)
-        elif choice=='b':
-            comment_text=raw_input("Enter the comment you want to post: ")
-            multi_comment(tag_list,comment_text)
-        else:
-            print colored("Wrong choice!",'red')
-    except:
-        print colored("Unable to process your request. Please try again!!",'red')
+    if tag_name.isspace()==True or len(tag_name)==0:
+        print colored("Tag is empty. Try again!",'red')
+    else:
+        print "Select from following options for commenting on posts: "
+        print "a. Fixed comment to promote acadview"
+        print "b. Custom comment"
+        choice=raw_input("Enter your choice: ")
+        request_url=(BASE_URL+'tags/%s/media/recent?access_token=%s') %(tag_name,APP_ACCESS_TOKEN)
+        print "GET request url: %s" %(request_url)
+        try:
+            tag_list=requests.get(request_url).json()                                       #STORES JSON OBJECT RESPONSE IN A VARIABLE
+            if choice=='a':
+                comment_text = "Join Acadview to become Full Stack Developer and get a job!"
+                multi_comment(tag_list,comment_text)
+            elif choice=='b':
+                comment_text=raw_input("Enter the comment you want to post: ")
+                multi_comment(tag_list,comment_text)
+            else:
+                print colored("Wrong choice!",'red')
+        except:
+            print colored("Unable to process your request. Please try again!!",'red')
 
 # __________________________________________________________________________________________________________________________________________________
 
 #function to ask users user for task they want to perform and calls the function accordingly
 def start_bot():
-        while True:
+    while True:
             print '\n'
-            print colored("___________________________ | _/\_ INSTABOT  _/\_ | ___________________________",'magenta')
+            print colored("___________________________ | _/\_  INSTABOT  _/\_ | ___________________________",'magenta')
             print colored('Hey! Welcome to instaBot!','blue')
             print colored('Here are your menu options:','blue')
             print "a.Get your own details\n"
@@ -509,6 +543,7 @@ def start_bot():
                 exit()
             else:
                 print colored("wrong choice",'red')
+
 
 # __________________________________________________________________________________________________________________________________________________
 
